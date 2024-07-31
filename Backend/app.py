@@ -6,7 +6,7 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from flask_mail import Mail, Message
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 from flask import abort
-from models import db, User, PersonalDetails, Space,  SpaceAvailable, Payment
+from Backend.app.models import db, User, PersonalDetails, Space,  SpaceAvailable, Payment
 from config import app
 from datetime import datetime, timedelta  # Import datetime module
 from dateutil.relativedelta import relativedelta
@@ -38,7 +38,7 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 mail = Mail(app)
 db.init_app(app)
 login_manager = LoginManager(app)
-app.config.from_object('config')  # Load app configuration from config.py
+app.config.from_object('config')  #  space configuration from config.py
 # Initialize Flask-Session
 Session(app)
 # Create tables in the database
@@ -147,14 +147,14 @@ def send_confirmation_email(user):
         <p>Please click the button below to verify your email address:</p>
         <a class="btn" href="{confirm_url}">Verify Email</a>
         <p style="margin-top: 20px;">If you didn't request this, please ignore this email.</p>
-        <p class="footer">This email was sent to {user.email} from PlacePulse. </p>
+        <p class="footer">This email was sent to {user.email} from The Groove. </p>
         <p class="footer">Please do not reply to this email.</p>
       </div>
     </body>
     </html>
     """
     msg = Message('Kindly Confirm Your Email Address', 
-                  sender=("PlacePulse", app.config['MAIL_DEFAULT_SENDER']), 
+                  sender=("The Groove", app.config['MAIL_DEFAULT_SENDER']), 
                   recipients=[user.email])
     
     msg.html = html_body
@@ -404,7 +404,7 @@ def request_spaces():
         # Validate input data
         if not all([space_name, amount, duration, ]):
             return jsonify({"message": "All fields are required"}), 400
-        # Fetch the specified available loan
+        # Fetch the specified available spaces
         available_space = SpaceAvailable.query.filter_by(name=space_name).first()
         if not available_space:
             return jsonify({"message": "Requested room is already occupied"}), 400
@@ -455,12 +455,12 @@ def get_available_spaces():
     except Exception as e:
         return jsonify({"message": f"Failed to fetch available spaces: {str(e)}"}), 500
 #managing loans
-@app.route('/admin/manageloans', methods=['POST', 'DELETE', 'PUT'])
+@app.route('/admin/managespaces', methods=['POST', 'DELETE', 'PUT'])
 @require_api_key
 @admin_required 
-def manage_available_loans():
+def manage_available_spaces():
     if request.method == 'POST':
-        # Add a new loan
+        # Add a new space
         data = request.json
         
         if not data:
@@ -493,9 +493,9 @@ def manage_available_loans():
             return jsonify({"message": f"Failed to add space: {str(e)}"}), 500
     
     elif request.method == 'DELETE':
-        # Deleting a loan by its ID
+        # Deleting a space by its ID
         data = request.json
-        loan_id = data.get('id')
+        space_id = data.get('id')
         if not space_id:
             return jsonify({"message": "Space ID is required for deletion"}), 400
         space = SpaceAvailable.query.get(space_id)
@@ -504,13 +504,13 @@ def manage_available_loans():
         try:
             db.session.delete(space)
             db.session.commit()
-            return jsonify({"message": "Loan deleted successfully"}), 200
+            return jsonify({"message": "Space deleted successfully"}), 200
         except Exception as e:
             db.session.rollback()
             return jsonify({"message": f"Failed to delete space: {str(e)}"}), 500
     
     elif request.method == 'PUT':
-        # Update an existing loan
+        # Update an existing space
         data = request.space
         
         if not data:
@@ -721,12 +721,12 @@ def reset_password(token):
         flash('Invalid or expired token.', 'error')
     return render_template('user/reset_password.html', token=token)
 # Approving and rejecting loans
-@app.route('/admin/loan/<int:loan_id>/action', methods=['POST'])
+@app.route('/admin/space/<int:space_id>/action', methods=['POST'])
 @require_api_key
 @admin_required 
 def space_action(space_id):
     """
-    Endpoint for the admin to approve or reject a loan.
+    Endpoint for the admin to assign a space.
     """
     if current_user.role != 'admin':
         return jsonify({'error': 'Unauthorized access'}), 403
@@ -734,7 +734,7 @@ def space_action(space_id):
     action = data.get('action')
     space = None
     try:
-        # Retrieve the loan using the provided loan_id
+        # Retrieve the space using the provided space_id
         space = space.query.filter_by(id=space_id).one()
     except NoResultFound:
         return jsonify({'error': 'Space not found'}), 404
@@ -783,7 +783,7 @@ def space_action(space_id):
         except Exception as e:
             db.session.rollback()
             return jsonify({'error': f'Failed to occupy the space: {str(e)}'}), 500
-#fetching the loans
+#fetching the spaces
 @app.route('/admin/getspaces', methods=['GET'])
 @require_api_key
 @admin_required  # Ensure only authenticated users can access this route

@@ -88,7 +88,7 @@ class Space(db.Model):
     """
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255))
-    
+    image_url = db.Column(db.String(255))
     amount = db.Column(db.Float)
     duration = db.Column(db.Integer)
     location = db.Column(db.String(255))
@@ -102,7 +102,7 @@ class Space(db.Model):
         return (f"Space(id={self.id}, location={self.location}, amount={self.amount}, "
                 f"duration={self.duration}, "
                 f"taken_time={self.taken_time}, status='{self.status}', "
-                f"user_id={self.user_id}, loan_available_id={self.space_available_id})")
+                f"user_id={self.user_id}, space_available_id={self.space_available_id})")
 # SpaceAvailable Model
 class SpaceAvailable(db.Model):
     """
@@ -111,7 +111,7 @@ class SpaceAvailable(db.Model):
         id (int): The unique identifier for the available space type.
         name (str): The name of the space type.
         space_type (str): The type/category/location of the space.
-        amount (float): The maximum amount that can be requested for this loan type.
+        amount (float): The maximum amount that can be requested for this space type.
         interest_rate (float): The interest rate for this space type.
         duration_months (int): The maximum duration in months for this space.
     """
