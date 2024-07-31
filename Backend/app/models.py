@@ -60,10 +60,10 @@ class PersonalDetails(db.Model):
     """
     id = db.Column(db.Integer, primary_key=True)
     image_url = db.Column(db.String(255))
-    first_name = db.column(db.str(255))
-    last_name = db.column(db.str(255))
-    contacts = db.column(db.int(255))
-    gender = db.column(db.str(255))
+    first_name = db.Column(db.String(255))
+    last_name = db.Column(db.String(255))
+    contacts = db.Column(db.Integer(255))
+    gender = db.Column(db.String(255))
 
     resident_type = db.Column(db.String(20))  # 'foreign' or 'Kenyan'
     

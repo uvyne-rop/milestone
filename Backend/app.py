@@ -720,7 +720,7 @@ def reset_password(token):
     except:
         flash('Invalid or expired token.', 'error')
     return render_template('user/reset_password.html', token=token)
-# Approving and rejecting loans
+# occupied and not occupied spaces
 @app.route('/admin/space/<int:space_id>/action', methods=['POST'])
 @require_api_key
 @admin_required 
