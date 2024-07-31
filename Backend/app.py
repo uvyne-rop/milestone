@@ -6,7 +6,7 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from flask_mail import Mail, Message
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 from flask import abort
-from Backend.app.models import db, User, PersonalDetails, Space,  SpaceAvailable, Payment
+from app.models import db, User, PersonalDetails, Space,  SpaceAvailable, Payment
 from config import app
 from datetime import datetime, timedelta  # Import datetime module
 from dateutil.relativedelta import relativedelta
@@ -18,8 +18,14 @@ from werkzeug.exceptions import BadRequest
 from werkzeug.utils import secure_filename
 from functools import wraps
 from sqlalchemy.orm.exc import NoResultFound
+from flask_migrate import Migrate
+
+from config import app
 from flask_cors import CORS
+
 CORS(app)  # You can customize CORS here if needed
+
+
 
 
 
@@ -221,7 +227,7 @@ def send_api_key_email(user, api_key):
             raise ValueError("User is not defined")
         # Create the message object for the email
         msg = Message('Your API Key',
-                      sender=("PlacePulse", app.config['MAIL_DEFAULT_SENDER']),
+                      sender=("The Groove", app.config['MAIL_DEFAULT_SENDER']),
                       recipients=[user.email])
         
         # Render the email body using the HTML template
@@ -521,7 +527,7 @@ def manage_available_spaces():
         space = SpaceAvailable.query.get(space_id)
         if not space:
             return jsonify({"message": "space not found"}), 404
-        # Update loan fields if provided
+        # Update space fields if provided
         space.name = data.get('name', space.name)
         space.space_type = data.get('space_type', space.space_type)
         space.amount = data.get('amount', space.amount)

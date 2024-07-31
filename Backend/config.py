@@ -25,6 +25,7 @@ app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER')
 app.config['MAIL_MAX_EMAILS'] = os.getenv('MAIL_MAX_EMAILS')
 app.config['MAIL_ASCII_ATTACHMENTS'] = os.getenv('MAIL_ASCII_ATTACHMENTS').lower() == 'true'
+SESSION_TYPE = 'filesystem'
 
 # # Session Configuration using Filesystem
 # app.config['SESSION_TYPE'] = 'filesystem'
