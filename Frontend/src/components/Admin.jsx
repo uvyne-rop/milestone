@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-// import axios from 'axios';
+import axios from 'axios';
 
 const Admin = () => {
     const [spaces, setSpaces] = useState([]);
@@ -13,7 +13,7 @@ const Admin = () => {
 
     const fetchSpaces = async () => {
         try {
-            const response = await axios.get('/api/spaces');
+            const response = await axios.get(' http://127.0.0.1:5000');
             setSpaces(response.data);
         } catch (error) {
             console.error('Error fetching spaces:', error);
@@ -29,9 +29,9 @@ const Admin = () => {
         e.preventDefault();
         try {
             if (selectedSpace) {
-                await axios.put(`/api/spaces/${selectedSpace.id}`, form);
+                await axios.put(` http://127.0.0.1:5000/spaces/${selectedSpace.id}`, form);
             } else {
-                await axios.post('/api/spaces', form);
+                await axios.post(' http://127.0.0.1:5000/spaces', form);
             }
             fetchSpaces();
             setForm({ name: '', description: '', price: '' });
@@ -48,7 +48,7 @@ const Admin = () => {
 
     const handleDelete = async (id) => {
         try {
-            await axios.delete(`/api/spaces/${id}`);
+            await axios.delete(` http://127.0.0.1:5000/spaces/${id}`);
             fetchSpaces();
         } catch (error) {
             console.error('Error deleting space:', error);

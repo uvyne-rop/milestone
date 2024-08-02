@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Authorization Routes Documentation</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap">
+  <style>
+    /* Base Styles */
+    body {
+      font-family: 'Roboto', sans-serif;
+      line-height: 1.6;
+      padding: 20px;
+      background-color: #f4f7f6;
+      margin: 0;
+      color: #333;
+    }
+
+    /* Header */
+    h1, h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #0073e6;
+      font-size: 2.5em;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    h2 {
+      font-size: 2em;
+    }
+
+    /* Navigation */
+    nav ul {
+      list-style-type: none;
+      padding: 0;
+      text-align: center;
+      margin-bottom: 30px;
+      background-color: #0073e6;
+      border-radius: 5px;
+      overflow: hidden;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    nav li {
+      display: inline-block;
+    }
+
+    nav a {
+      text-decoration: none;
+      color: #fff;
+      padding: 15px 25px;
+      display: inline-block;
+      transition: background-color 0.3s ease;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    nav a:hover,
+    nav a.active {
+      background-color: #005bb5;
+    }
+
+    /* Main Content */
+    .route {
+      margin-bottom: 30px;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .route .endpoint {
+      font-size: 1.5em;
+      color: #0073e6;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .route .description {
+      font-size: 1.2em;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #333;
+    }
+
+    .route pre {
+      background-color: #f4f7f6;
+      padding: 15px;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+      overflow: auto;
+    }
+
+    .request, .response {
+      margin-bottom: 10px;
+      font-size: 1em;
+      color: #555;
+    }
+
+    .request strong, .response strong {
+      color: #0073e6;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      padding: 20px; /* adjusted padding */
+      background-color: #0073e6;
+      color: #fff;
+      border-radius: 5px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    footer p {
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>The Groove space Management API Documentation</h1>
+
+  <nav>
+    <ul>
+      <li><a href="{{ url_for('serve_page', page='index') }}" {% if page == 'index' %}class="active"{% endif %}>Home</a></li>
+      <li><a href="{{ url_for('serve_page', page='user_routes') }}" {% if page == 'user_routes' %}class="active"{% endif %}>User Routes</a></li>
+      <li><a href="{{ url_for('serve_page', page='admin_routes') }}" {% if page == 'admin_routes' %}class="active"{% endif %}>Admin Routes</a></li>
+      <li><a href="{{ url_for('serve_page', page='authorization_routes') }}" {% if page == 'authorization_routes' %}class="active"{% endif %}>Authorization Routes</a></li>
+    </ul>
+  </nav>
+  <h2>Authorization Routes Documentation</h2>
+
+  <div class="route">
+    <div class="endpoint">Login</div>
+    <div class="description">POST /universal/login</div>
+    <div class="request">
+      <div><strong>Description:</strong> Logs a user into the system.</div>
+      <div><strong>Request Body:</strong></div>
+      <pre>{
+  "email": "string, required",
+  "password": "string, required"
+}</pre>
+    </div>
+    <div class="response">
+      <div><strong>Response:</strong></div>
+      <div>200 OK: Login successful with user ID.</div>
+      <div>400 Bad Request: Email or password missing.</div>
+      <div>401 Unauthorized: Invalid credentials.</div>
+      <div>403 Forbidden: Account not verified.</div>
+    </div>
+  </div>
+
+  <div class="route">
+    <div class="endpoint">Logout</div>
+    <div class="description">POST /logout</div>
+    <div class="request">
+      <div><strong>Description:</strong> Logs out the currently logged-in user.</div>
+      <div><strong>Authorization:</strong> Requires user authentication.</div>
+    </div>
+    <div class="response">
+      <div><strong>Response:</strong></div>
+      <div>200 OK: Logout successful.</div>
+      <div>500 Internal Server Error: Logout failed.</div>
+    </div>
+  </div>
+
+  <div class="route">
+    <div class="endpoint">Forgot Password</div>
+    <div class="description">POST /forgot_password</div>
+    <div class="request">
+      <div><strong>Description:</strong> Initiates the password reset process.</div>
+      <div><strong>Request Payload:</strong></div>
+      <pre>{
+  "email": "string, required"
+}</pre>
+    </div>
+    <div class="response">
+      <div><strong>Response:</strong></div>
+      <div>Redirects to appropriate pages based on success or failure.</div>
+    </div>
+  </div>
+
+  <div class="route">
+    <div class="endpoint">Password Reset</div>
+    <div class="description">GET /reset_password/&lt;token&gt;, POST /reset_password/&lt;token&gt;</div>
+    <div class="request">
+      <div><strong>Description:</strong> Allows users to reset their password using a token sent via email.</div>
+      <div><strong>Request Payload (POST):</strong></div>
+      <pre>{
+  "new_password": "string, required",
+  "confirm_password": "string, required"
+}</pre>
+    </div>
+    <div class="response">
+      <div><strong>Response:</strong></div>
+      <div>Redirects to appropriate pages based on success or failure.</div>
+    </div>
+  </div>
+
+  <footer>
+    <p>&copy; 2024 The Groove space Management API Documentation</p>
+  </footer>
+</body>
+</html>

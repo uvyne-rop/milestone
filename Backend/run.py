@@ -20,13 +20,12 @@ from functools import wraps
 from sqlalchemy.orm.exc import NoResultFound
 from flask_migrate import Migrate
 
+
 from config import app
 from flask_cors import CORS
 
+
 CORS(app)  # You can customize CORS here if needed
-
-
-
 
 
 
@@ -39,7 +38,7 @@ s3_client = boto3.client(
     aws_access_key_id=app.config['S3_ACCESS_KEY'],
     aws_secret_access_key=app.config['S3_SECRET_KEY']
 )
-# Ensure the upload folder exists
+# # Ensure the upload folder exists
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 mail = Mail(app)
 db.init_app(app)
@@ -54,34 +53,34 @@ with app.app_context():
 def load_user(user_id):
     return User.query.get(int(user_id))
 # Decorator for admin-only routes
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if not current_user.is_authenticated or current_user.role != 'admin':
-            return jsonify({"message": "Access denied, admin only"}), 403
-        return f(*args, **kwargs)
-    return decorated_function
-def generate_api_key():
-    import uuid
-    return str(uuid.uuid4())
-def store_api_key(user_id):
-    api_key = generate_api_key()
-    user = User.query.get(user_id)
-    user.api_key = api_key
-    db.session.commit()
-    return api_key
-def require_api_key(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        api_key = request.headers.get('x-api-key') or request.args.get('api_key')
+# def admin_required(f):
+#     @wraps(f)
+#     def decorated_function(*args, **kwargs):
+#         if not current_user.is_authenticated or current_user.role != 'admin':
+#             return jsonify({"message": "Access denied, admin only"}), 403
+#         return f(*args, **kwargs)
+#     return decorated_function
+# def generate_api_key():
+#     import uuid
+#     return str(uuid.uuid4())
+# def store_api_key(user_id):
+#     api_key = generate_api_key()
+#     user = User.query.get(user_id)
+#     user.api_key = api_key
+#     db.session.commit()
+#     return api_key
+# def require_api_key(f):
+#     @wraps(f)
+#     def decorated_function(*args, **kwargs):
+#         api_key = request.headers.get('x-api-key') or request.args.get('api_key')
         
-        if not api_key or not User.query.filter_by(api_key=api_key).first():
-            return jsonify({"message": "Invalid or missing API key"}), 401
+#         if not api_key or not User.query.filter_by(api_key=api_key).first():
+#             return jsonify({"message": "Invalid or missing API key"}), 401
         
-        return f(*args, **kwargs)
+    #     return f(*args, **kwargs)
     
-    return decorated_function
-# Assuming `serializer` is initialized elsewhere with your app's secret key
+    # return decorated_function
+#Assuming `serializer` is initialized elsewhere with your app's secret key
 serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
 # Function to generate confirmation token
 def generate_confirmation_token(email):
@@ -184,9 +183,9 @@ def register():
         return jsonify({"message": "Email already registered. Choose another email."}), 400
     # Hash the password before storing it in the database
     hashed_password = generate_password_hash(password)
-   # Generate a new API key
+  # Generate a new API key
     # api_key = generate_api_key()
-    # Create a new user
+    #Create a new user
     new_user = User(
         first_name=first_name,
         last_name=last_name,
@@ -220,28 +219,7 @@ def resend_confirmation_email():
     # Send new confirmation email
     send_confirmation_email(current_user)
     return jsonify({"message": "Confirmation email resent. Please check your email to confirm your account."}), 200
-# Route to handle email confirmation
-def send_api_key_email(user, api_key):
-    try:
-        if not user:
-            raise ValueError("User is not defined")
-        # Create the message object for the email
-        msg = Message('Your API Key',
-                      sender=("The Groove", app.config['MAIL_DEFAULT_SENDER']),
-                      recipients=[user.email])
-        
-        # Render the email body using the HTML template
-        email_body = render_template('email/api_key_email.html', user=user, api_key=api_key)
-        
-        # Set the HTML body of the email message
-        msg.html = email_body
-        
-        # Send the email
-        mail.send(msg)
-        
-        print("API key email sent successfully.")
-    except Exception as e:
-        print(f"Failed to send API key email: {str(e)}")
+
 @app.route('/confirm_email/<token>', methods=['GET'])
 def confirm_email(token):
     try:
@@ -252,27 +230,27 @@ def confirm_email(token):
         if user:
             if user.verification:
                 flash('Your email is already verified.', 'info')
-                return render_template('email/already_verified.html')
+                return render_template('already_verified.html')
             
             # Set user verification to True
             user.verification = True
-            user.api_key = generate_api_key()  # Generate API key
+            # user.api_key = generate_api_key()  # Generate API key
             db.session.commit()
             # Send API key email to the user
-            send_api_key_email(user, user.api_key)
+            # send_api_key_email(user, user.api_key)
             flash('Your email has been successfully verified. Please log in.', 'success')
             return render_template('login.html')
-            # Redirect to login page
+            #Redirect to login page
             # return render_template('login.html')  # Adjust 'login' to your actual login route
         else:
             flash('The verification link is invalid or has expired.', 'error')
-            return render_template('email/invalid_token.html')
+    #         return render_template('email/invalid_token.html')
     except SignatureExpired:
-        return render_template('email/expired_token.html')
+        return render_template('expired_token.html')
     except BadSignature:
-        return render_template('email/invalid_token.html')
+        return render_template('invalid_token.html')
     except Exception as e:
-        return render_template('email/error.html', error=str(e))
+        return render_template('error.html', error=str(e))
 # Registration route for admin users
 @app.route('/admin/register_admin', methods=['POST'])
 def register_admin():
@@ -303,7 +281,7 @@ def register_admin():
     # Hash the password before storing it in the database
     hashed_password = generate_password_hash(password)
     # Generate a unique API key for the user
-    api_key = generate_api_key()
+    # api_key = generate_api_key()
     # Create a new admin user
     new_admin_user = User(
         first_name=first_name,
@@ -314,7 +292,7 @@ def register_admin():
         reset_token_expiration=None,
         role='admin',
         password=hashed_password,
-        api_key=api_key 
+        # api_key=api_key 
     )
     # Add the admin user to the database
     db.session.add(new_admin_user)
@@ -322,12 +300,15 @@ def register_admin():
     # Return a success message with status code 201 (Created)
     response = {
         "message": "Admin registration successful. You can now log in.",
-        "api_key": api_key
+        # "api_key": api_key
     }
     return jsonify(response), 201
 # If method is not POST, Flask will automatically return a 405 Method Not Allowed
 # Landing page route
 # @require_api_key
+
+
+
 @app.route('/')
 @app.route('/<page>')
 def serve_page(page=None):
@@ -343,7 +324,7 @@ def serve_page(page=None):
         return jsonify({"message":"Page Not Found"}), 404
 # Universal login route
 @app.route('/universal/login', methods=['POST'])
-@require_api_key
+# @require_api_key
 def login():
     try:
         # Extract data from the request, handling both form data and JSON
@@ -383,7 +364,7 @@ def login():
         return jsonify({"message": "An error occurred during login", "error": str(e)}), 500
     
 @app.route('/logout', methods=['POST'])
-@require_api_key
+# @require_api_key
 @login_required
 def logout():
     try:
@@ -393,7 +374,7 @@ def logout():
     except Exception as e:
         return jsonify({"message": f"Failed to logout: {str(e)}"}), 500
 @app.route('/user/spacerequest', methods=['POST'])
-@require_api_key
+#@require_api_key
 @login_required
 def request_spaces():
     """
@@ -440,7 +421,7 @@ def request_spaces():
         return jsonify({"message": f"Failed to request space: {str(e)}"}), 500
 # Route to fetch and display available spaces
 @app.route('/universal/spacesavailable', methods=['GET'])
-@require_api_key
+# @require_api_key
 @login_required
 def get_available_spaces():
     try:
@@ -462,8 +443,8 @@ def get_available_spaces():
         return jsonify({"message": f"Failed to fetch available spaces: {str(e)}"}), 500
 #managing loans
 @app.route('/admin/managespaces', methods=['POST', 'DELETE', 'PUT'])
-@require_api_key
-@admin_required 
+# @require_api_key
+#@admin_required 
 def manage_available_spaces():
     if request.method == 'POST':
         # Add a new space
@@ -472,7 +453,7 @@ def manage_available_spaces():
         if not data:
             return jsonify({"message": "No data received"}), 400
         # Validate input data
-        required_fields = ['name', 'space_type', 'amount', 'interest_rate', 'duration_months']
+        required_fields = ['name', 'space_type', 'amount', 'duration_months']
         for field in required_fields:
             if field not in data:
                 return jsonify({"message": f"Field '{field}' is missing"}), 400
@@ -480,7 +461,7 @@ def manage_available_spaces():
             name=data['name'],
             space_type=data['space_type'],
             amount=data['amount'],
-            interest_rate=data['interest_rate'],
+          
             duration_months=data['duration_months']
         )
         try:
@@ -531,7 +512,7 @@ def manage_available_spaces():
         space.name = data.get('name', space.name)
         space.space_type = data.get('space_type', space.space_type)
         space.amount = data.get('amount', space.amount)
-        space.interest_rate = data.get('interest_rate', space.interest_rate)
+        # space.interest_rate = data.get('interest_rate', space.interest_rate)
         space.duration_months = data.get('duration_months', space.duration_months)
         try:
             db.session.commit()
@@ -549,7 +530,7 @@ def manage_available_spaces():
         return jsonify({"message": "Method not allowed"}), 405
 # Route for CRUD operations on personal details and images
 @app.route('/personal_details', methods=['GET', 'POST', 'PUT', 'DELETE'])
-@require_api_key
+# @require_api_key
 @login_required
 def manage_personal_details():
     user_id = current_user.id
@@ -585,7 +566,7 @@ def manage_personal_details():
                     image = request.files['image']
                     if image.filename != '':
                         filename = secure_filename(image.filename)
-                        s3_client.upload_fileobj(image, app.config['S3_BUCKET_NAME'], filename)
+                        # s3_client.upload_fileobj(image, app.config['S3_BUCKET_NAME'], filename)
                         image_url = f"https://{app.config['S3_BUCKET_NAME']}.s3.amazonaws.com/{filename}"
             elif request.content_type == 'application/json':
                 # Handle JSON data
@@ -631,14 +612,14 @@ def manage_personal_details():
                     image = request.files['image']
                     if image.filename != '':
                         filename = secure_filename(image.filename)
-                        s3_client.upload_fileobj(image, app.config['S3_BUCKET_NAME'], filename)
+                        # s3_client.upload_fileobj(image, app.config['S3_BUCKET_NAME'], filename)
                         personal_details.image_url = f"https://{app.config['S3_BUCKET_NAME']}.s3.amazonaws.com/{filename}"
             elif request.content_type == 'application/json':
                 # Handle JSON data update
                 data = request.get_json()
                 personal_details.first_name = data.get('first_name', personal_details.first_name)
                 personal_details.last_name = data.get('last_name', personal_details.last_name)
-                personal_details.contacts = float(data.get('salary', personal_details.contacts))
+                personal_details.contacts = float(data.get('contacts', personal_details.contacts))
                 personal_details.national_id = data.get('national_id', personal_details.national_id)
                 personal_details.image_url = data.get('image_url', personal_details.image_url)
             else:
@@ -660,50 +641,10 @@ def manage_personal_details():
             db.session.rollback()
             return jsonify({'message': f'Failed to delete image URL: {str(e)}'}), 500
     return jsonify({'message': 'Invalid request method'}), 405
-# Function to send email notification for successful addition of personal details with loan information
-def send_personal_details_confirmation_email(user, space_amount):
-    message_body = f'Hi {user.first_name},\n\nYou have successfully added your personal details.\n\nBased on your enquiries, you are eligible for a space of {space_type} amount {space_amount}KSH.'
-    msg = Message('Personal Details Added Successfully', sender='your-email@example.com', recipients=[user.email])
-    msg.body = message_body
-    mail.send(msg)
-# # Route to resend confirmation email
-# @app.route('/resend_confirmation_email')
-# @login_required
-# def resend_confirmation_email():
-#     if current_user.verification:
-#         flash('Your email is already verified.', 'info')
-#         return redirect(url_for('user_profile'))
-#     send_confirmation_email(current_user)
-#     flash('Confirmation email resent. Please check your email to confirm your account.', 'success')
-#     return redirect(url_for('user_profile'))
-# Route for forgot password page
-@app.route('/forgot_password', methods=['GET', 'POST'])
-@require_api_key
-def forgot_password():
-    if request.method == 'POST':
-        email = request.form.get('email')
-        user = User.query.filter_by(email=email).first()
-        if user:
-            if not user.verification:
-                flash('Your email address is not verified. Please verify your email before resetting your password.',
-                      'error')
-                return redirect(url_for('forgot_password'))
-            # Generate a password reset token
-            token = serializer.dumps(email, salt='reset-password')
-            # Send password reset email
-            reset_url = url_for('reset_password', token=token, _external=True)
-            message_body = f'Hi {user.first_name},\n\nPlease click the following link to reset your password:\n{reset_url}'
-            msg = Message('Password Reset', sender='your-email@example.com', recipients=[user.email])
-            msg.body = message_body
-            mail.send(msg)
-            flash('Password reset instructions have been sent to your email.', 'success')
-            return redirect(url_for('login'))
-        else:
-            flash('No user found with that email address.', 'error')
-    return render_template('user/forgot_password.html')
+
 # Route for password reset page
 @app.route('/reset_password/<token>', methods=['GET', 'POST'])
-@require_api_key
+# @require_api_key
 def reset_password(token):
     try:
         email = serializer.loads(token, salt='reset-password',
@@ -728,8 +669,8 @@ def reset_password(token):
     return render_template('user/reset_password.html', token=token)
 # occupied and not occupied spaces
 @app.route('/admin/space/<int:space_id>/action', methods=['POST'])
-@require_api_key
-@admin_required 
+# @require_api_key
+# @admin_required 
 def space_action(space_id):
     """
     Endpoint for the admin to assign a space.
@@ -791,8 +732,8 @@ def space_action(space_id):
             return jsonify({'error': f'Failed to occupy the space: {str(e)}'}), 500
 #fetching the spaces
 @app.route('/admin/getspaces', methods=['GET'])
-@require_api_key
-@admin_required  # Ensure only authenticated users can access this route
+# @require_api_key
+# @admin_required  # Ensure only authenticated users can access this route
 def get_space_by_status():
     if current_user.role != 'admin':
         return jsonify({'error': 'Unauthorized access'}), 403
@@ -826,8 +767,8 @@ def get_space_by_status():
 # CRUD Operations for Users by admin
 # Create User
 @app.route('/admin/users', methods=['POST', 'GET'])
-@require_api_key
-@admin_required
+# @require_api_key
+# @admin_required
 def manage_users():
     if request.method == 'POST':
         # Create a new user
@@ -860,8 +801,8 @@ def manage_users():
     return jsonify({"message": "Method not allowed"}), 405
 # Update or Delete User
 @app.route('/admin/users/<int:user_id>', methods=['PUT', 'DELETE'])
-@require_api_key
-@admin_required
+# @require_api_key
+# @admin_required
 def manage_user(user_id):
     user = User.query.get(user_id)
     if not user:
@@ -893,7 +834,7 @@ def manage_user(user_id):
     return jsonify({"message": "Method not allowed"}), 405
 #DASHBOARD ROUTE
 @app.route('/user/dashboard', methods=['GET'])
-@require_api_key
+# @require_api_key
 @login_required  
 def dashboard():
     
@@ -943,7 +884,7 @@ def dashboard():
         "available_spaces": spaces
     })
 @app.route('/admin/dashboard', methods=['GET'])
-@require_api_key
+# @require_api_key
 @login_required
 def admin_dashboard():
     if current_user.role != 'admin':
@@ -1012,4 +953,4 @@ def calculate_space_deadline(taken_time, duration):
     deadline = taken_time + relativedelta(months=duration)
     return deadline
 if __name__ == "__main__":
-    app.run(debug=True)
+     app.run(host='127.0.0.1', port=5000, debug=True)

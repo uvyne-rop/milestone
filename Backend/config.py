@@ -27,16 +27,6 @@ app.config['MAIL_MAX_EMAILS'] = os.getenv('MAIL_MAX_EMAILS')
 app.config['MAIL_ASCII_ATTACHMENTS'] = os.getenv('MAIL_ASCII_ATTACHMENTS').lower() == 'true'
 SESSION_TYPE = 'filesystem'
 
-# # Session Configuration using Filesystem
-# app.config['SESSION_TYPE'] = 'filesystem'
-# app.config['SESSION_FILE_DIR'] = '/tmp/flask_session'
-# app.config['SESSION_PERMANENT'] = False
-# app.config['SESSION_USE_SIGNER'] = True
-# app.config['SESSION_COOKIE_NAME'] = 'server_session'  # Customize session cookie name
-# app.config['SESSION_COOKIE_HTTPONLY'] = False  # Prevents JavaScript from accessing the cookie
-# app.config['SESSION_COOKIE_SECURE'] = True  # Ensures cookies are sent over HTTPS only
-# app.config['SESSION_COOKIE_SAMESITE'] = 'None'  # Prevents CSRF attacks
-# app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)  # Adjust based on your requirements
 
 app.config['UPLOAD_FOLDER'] = 'uploads/'  # Directory to store uploaded images
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # Maximum file size: 16MB

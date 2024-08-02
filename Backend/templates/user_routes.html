@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>User Routes Documentation</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap">
+  <style>
+    /* Base Styles */
+    body {
+      font-family: 'Roboto', sans-serif;
+      line-height: 1.6;
+      padding: 20px;
+      background-color: #f4f7f6;
+      margin: 0;
+      color: #333;
+    }
+
+    /* Container to centralize content */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    /* Header */
+    h1, h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #0073e6;
+      font-size: 2.5em;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    h2 {
+      font-size: 2em;
+    }
+
+    /* Navigation */
+    nav ul {
+      list-style-type: none;
+      padding: 0;
+      text-align: center;
+      margin-bottom: 30px;
+      background-color: #0073e6;
+      border-radius: 5px;
+      overflow: hidden;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    nav li {
+      display: inline-block;
+    }
+
+    nav a {
+      text-decoration: none;
+      color: #fff;
+      padding: 15px 25px;
+      display: inline-block;
+      transition: background-color 0.3s ease;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    nav a:hover,
+    nav a.active {
+      background-color: #005bb5;
+    }
+
+    /* Main Content */
+    .route {
+      margin-bottom: 30px;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .route .endpoint {
+      font-size: 1.5em;
+      color: #0073e6;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .route .description {
+      font-size: 1.2em;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #333;
+    }
+
+    .route pre {
+      background-color: #f4f7f6;
+      padding: 15px;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+      overflow: auto;
+    }
+
+    .request, .response {
+      margin-bottom: 10px;
+      font-size: 1em;
+      color: #555;
+    }
+
+    .request strong, .response strong {
+      color: #0073e6;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      padding: 10px 20px; /* same horizontal padding as body */
+      background-color: #0073e6;
+      color: #fff;
+      border-radius: 5px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    footer p {
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>The Groove space Management API Documentation</h1>
+    <nav>
+      <ul>
+        <li><a href="{{ url_for('serve_page', page='index') }}" {% if page == 'index' %}class="active"{% endif %}>Home</a></li>
+        <li><a href="{{ url_for('serve_page', page='user_routes') }}" {% if page == 'user_routes' %}class="active"{% endif %}>User Routes</a></li>
+        <li><a href="{{ url_for('serve_page', page='admin_routes') }}" {% if page == 'admin_routes' %}class="active"{% endif %}>Admin Routes</a></li>
+        <li><a href="{{ url_for('serve_page', page='authorization_routes') }}" {% if page == 'authorization_routes' %}class="active"{% endif %}>Authorization Routes</a></li>
+      </ul>
+    </nav>
+    <h2>User Routes Documentation</h2>
+
+    <div class="route">
+      <div class="endpoint">Register a Regular User</div>
+      <div class="description">POST /user/register</div>
+      <div class="request">
+        <div><strong>Description:</strong> Registers a new user.</div>
+        <div><strong>Request Body:</strong></div>
+        <pre>{
+  "first_name": "string, required",
+  "last_name": "string, required",
+  "email": "string, required",
+  "password": "string, required"
+}</pre>
+      </div>
+      <div class="response">
+        <div><strong>Response:</strong></div>
+        <div>201 Created: Successful registration. Check email for confirmation.</div>
+        <div>400 Bad Request: Missing required fields or email already registered.</div>
+      </div>
+    </div>
+
+    <div class="route">
+      <div class="endpoint">Resend Email Confirmation</div>
+      <div class="description">POST /resend_confirmation_email</div>
+      <div class="request">
+        <div><strong>Description:</strong> Resends the confirmation email for user registration.</div>
+        <div><strong>Authorization:</strong> Requires user authentication.</div>
+      </div>
+      <div class="response">
+        <div><strong>Response:</strong></div>
+        <div>200 OK: Email resent successfully.</div>
+        <div>403 Forbidden: Email already verified.</div>
+      </div>
+    </div>
+
+    <div class="route">
+      <div class="endpoint">Confirm Email</div>
+      <div class="description">GET /confirm_email/&lt;token&gt;</div>
+      <div class="request">
+        <div><strong>Description:</strong> Confirms the user's email address using the confirmation token.</div>
+        <div><strong>Parameters:</strong></div>
+        <div>token (string, required): Confirmation token received via email.</div>
+      </div>
+      <div class="response">
+        <div><strong>Response:</strong></div>
+        <div>200 OK: Email confirmation successful.</div>
+        <div>400 Bad Request: Invalid or expired token.</div>
+        <div>404 Not Found: User not found.</div>
+      </div>
+    </div>
+
+    <div class="route">
+      <div class="endpoint">Manage Personal Details and Images</div>
+      <div class="description">GET /personal_details, POST /personal_details, PUT /personal_details, DELETE /personal_details</div>
+      <div class="request">
+          <div>
+              <strong>Description:</strong> Allows users to manage their personal details and image uploads.
+          </div>
+          <div><strong>Authorization:</strong> Requires user authentication.</div>
+          <div><strong>Request Payload (POST):</strong></div>
+          <pre>{
+    "first_name": "string, required",
+    "last_name": "string, required",
+    "contacts": "number, required",
+    "gender": "string, required",
+    "space_name": "string, required",
+    "space_type": "string, required",
+    "national_id": "string, required",
+    "image": "file, optional"
+  }</pre>
+          <div><strong>Request Payload (PUT):</strong></div>
+          <pre>{
+            "first_name": "string", 
+            "last_name": "string",
+            "contacts": "number",
+            "gender": "string",
+          
+            "national_id": "string",
+            "image": "file, optional"
+   
+  }</pre>
+      </div>
+      <div class="response">
+          <div><strong>Response (GET):</strong></div>
+          <div>200 OK: Personal details retrieved successfully.</div>
+          <div>404 Not Found: Personal details not found.</div>
+          <div><strong>Response (POST):</strong></div>
+          <div>201 Created: Personal details created successfully.</div>
+          <div>400 Bad Request: Required fields missing or invalid.</div>
+          <div>500 Internal Server Error: Server-side issue.</div>
+          <div><strong>Response (PUT):</strong></div>
+          <div>200 OK: Personal details updated successfully.</div>
+          <div>404 Not Found: Personal details not found.</div>
+          <div>400 Bad Request: Invalid fields or unsupported content type.</div>
+          <div>500 Internal Server Error: Server-side issue.</div>
+          <div><strong>Response (DELETE):</strong></div>
+          <div>200 OK: Image URL deleted successfully.</div>
+          <div>404 Not Found: Personal details not found.</div>
+          <div>500 Internal Server Error: Server-side issue.</div>
+      </div>
+  </div>
+   
+
+    <div class="route">
+      <div class="endpoint">Request a space</div>
+      <div class="description">POST /user/spacerequest</div>
+      <div class="request">
+        <div><strong>Description:</strong> Submits a new space request for the logged-in user.</div>
+        <div><strong>Authorization:</strong> Requires user authentication.</div>
+        <div><strong>Request Body:</strong></div>
+        <pre>{
+  "space_name": "string, required",
+  "amount": "float, required",
+  "duration": "integer, required",
+  "space_available_id": "integer, required" #to be linked to the available space id requested
+}</pre>
+      </div>
+      <div class="response">
+        <div><strong>Response:</strong></div>
+        <div>201 Created: space request successful with space ID.</div>
+        <div>400 Bad Request: Required fields missing or exceeded limits.</div>
+        <div>500 Internal Server Error: Unexpected server error.</div>
+      </div>
+    </div>
+
+    <div class="route">
+      <div class="endpoint">Fetch Available spaces</div>
+      <div class="description">GET /universal/spacesavailable</div>
+      <div class="request">
+        <div><strong>Description:</strong> Fetches all available spaces.</div>
+        <div><strong>Authorization:</strong> Requires user authentication.</div>
+      </div>
+      <div class="response">
+        <div><strong>Response:</strong></div>
+        <div>200 OK: Success with JSON object containing available spaces.</div>
+        <div>500 Internal Server Error: Server-side issue.</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>&copy; 2024 The Groove space Management API Documentation</p>
+  </footer>
+</body>
+</html>
