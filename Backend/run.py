@@ -19,7 +19,7 @@ from werkzeug.utils import secure_filename
 from functools import wraps
 from sqlalchemy.orm.exc import NoResultFound
 from flask_migrate import Migrate
-
+from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
 
 from config import app
 from flask_cors import CORS
@@ -27,17 +27,40 @@ from flask_cors import CORS
 
 CORS(app)  # You can customize CORS here if needed
 
+users = {
+    "admin_user": {"role": "admin"},
+    "regular_user": {"role": "user"}
+}
+
+# Custom admin_required decorator
+def admin_required(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        try:
+            verify_jwt_in_request()  # Ensure the request has a valid JWT token
+            user_id = get_jwt_identity()  # Get the identity of the current user
+            user = users.get(user_id, None)
+            
+            if user and user.get("role") == "admin":
+                return fn(*args, **kwargs)
+            else:
+                return jsonify({"error": "Admin access required"}), 403
+
+        except Exception as e:
+            return jsonify({"error": str(e)}), 401
+
+    return wrapper
 
 
 # Initialize the serializer with  app's secret key
 serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
  #Initialize S3 client
-s3_client = boto3.client(
-    's3',
-    region_name=app.config['S3_REGION'],
-    aws_access_key_id=app.config['S3_ACCESS_KEY'],
-    aws_secret_access_key=app.config['S3_SECRET_KEY']
-)
+# s3_client = boto3.client(
+#     's3',
+#     region_name=app.config['S3_REGION'],
+#     aws_access_key_id=app.config['S3_ACCESS_KEY'],
+#     aws_secret_access_key=app.config['S3_SECRET_KEY']
+#)
 # # Ensure the upload folder exists
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 mail = Mail(app)
@@ -444,7 +467,7 @@ def get_available_spaces():
 #managing loans
 @app.route('/admin/managespaces', methods=['POST', 'DELETE', 'PUT'])
 # @require_api_key
-#@admin_required 
+@admin_required 
 def manage_available_spaces():
     if request.method == 'POST':
         # Add a new space
@@ -670,7 +693,7 @@ def reset_password(token):
 # occupied and not occupied spaces
 @app.route('/admin/space/<int:space_id>/action', methods=['POST'])
 # @require_api_key
-# @admin_required 
+@admin_required 
 def space_action(space_id):
     """
     Endpoint for the admin to assign a space.
@@ -768,7 +791,7 @@ def get_space_by_status():
 # Create User
 @app.route('/admin/users', methods=['POST', 'GET'])
 # @require_api_key
-# @admin_required
+@admin_required
 def manage_users():
     if request.method == 'POST':
         # Create a new user
@@ -802,7 +825,7 @@ def manage_users():
 # Update or Delete User
 @app.route('/admin/users/<int:user_id>', methods=['PUT', 'DELETE'])
 # @require_api_key
-# @admin_required
+@admin_required
 def manage_user(user_id):
     user = User.query.get(user_id)
     if not user:
@@ -953,4 +976,4 @@ def calculate_space_deadline(taken_time, duration):
     deadline = taken_time + relativedelta(months=duration)
     return deadline
 if __name__ == "__main__":
-     app.run(host='127.0.0.1', port=5000, debug=True)
+     app.run(host='127.0.0.1', port=8080, debug=True)
