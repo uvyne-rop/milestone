@@ -13,7 +13,7 @@ const Admin = () => {
 
     const fetchSpaces = async () => {
         try {
-            const response = await axios.get('http://127.0.0.1:8080/spaces'); // Correct the URL if needed
+            const response = await axios.get('http://127.0.0.1:8080/space'); // Correct the URL if needed
             setSpaces(response.data);
         } catch (error) {
             console.error('Error fetching spaces:', error);

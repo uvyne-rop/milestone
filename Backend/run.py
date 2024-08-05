@@ -31,6 +31,12 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
 app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), 'uploads')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'p6608665@gmail.com'
+app.config['MAIL_PASSWORD'] = 'waxg umor dfel ucpo'
+app.config['MAIL_DEFAULT_SENDER'] = 'p6608665@gmail.com'
 
 db.init_app(app)
 migrate = Migrate(app, db)
@@ -64,14 +70,8 @@ def admin_required(fn):
 
 # Initialize the serializer with  app's secret key
 serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
- #Initialize S3 client
-# s3_client = boto3.client(
-#     's3',
-#     region_name=app.config['S3_REGION'],
-#     aws_access_key_id=app.config['S3_ACCESS_KEY'],
-#     aws_secret_access_key=app.config['S3_SECRET_KEY']
-#)
-# # Ensure the upload folder exists
+ 
+# Ensure the upload folder exists
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 mail = Mail(app)
 # db.init_app(app)
@@ -85,34 +85,7 @@ with app.app_context():
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
-# Decorator for admin-only routes
-# def admin_required(f):
-#     @wraps(f)
-#     def decorated_function(*args, **kwargs):
-#         if not current_user.is_authenticated or current_user.role != 'admin':
-#             return jsonify({"message": "Access denied, admin only"}), 403
-#         return f(*args, **kwargs)
-#     return decorated_function
-# def generate_api_key():
-#     import uuid
-#     return str(uuid.uuid4())
-# def store_api_key(user_id):
-#     api_key = generate_api_key()
-#     user = User.query.get(user_id)
-#     user.api_key = api_key
-#     db.session.commit()
-#     return api_key
-# def require_api_key(f):
-#     @wraps(f)
-#     def decorated_function(*args, **kwargs):
-#         api_key = request.headers.get('x-api-key') or request.args.get('api_key')
-        
-#         if not api_key or not User.query.filter_by(api_key=api_key).first():
-#             return jsonify({"message": "Invalid or missing API key"}), 401
-        
-    #     return f(*args, **kwargs)
-    
-    # return decorated_function
+
 #Assuming `serializer` is initialized elsewhere with your app's secret key
 serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
 # Function to generate confirmation token
@@ -192,7 +165,7 @@ def send_confirmation_email(user):
     </html>
     """
     msg = Message('Kindly Confirm Your Email Address', 
-                  sender=("The Groove", app.config['MAIL_DEFAULT_SENDER']), 
+                  sender=("The Groove", app.config.get('MAIL_DEFAULT_SENDER', 'p6608665@gmail.com')),
                   recipients=[user.email])
     
     msg.html = html_body
@@ -216,8 +189,7 @@ def register():
         return jsonify({"message": "Email already registered. Choose another email."}), 400
     # Hash the password before storing it in the database
     hashed_password = generate_password_hash(password)
-  # Generate a new API key
-    # api_key = generate_api_key()
+ 
     #Create a new user
     new_user = User(
         first_name=first_name,
@@ -228,7 +200,7 @@ def register():
         reset_token_expiration=None,
         role='regular',
         password=hashed_password,  # Store hashed password
-        api_key=None  # Initialize API key as None initially
+       
     )
     # Add the user to the database
     db.session.add(new_user)
@@ -337,10 +309,6 @@ def register_admin():
     }
     return jsonify(response), 201
 # If method is not POST, Flask will automatically return a 405 Method Not Allowed
-# Landing page route
-# @require_api_key
-
-
 
 @app.route('/')
 @app.route('/<page>')
@@ -729,9 +697,7 @@ def space_action(space_id):
         return jsonify({'error': 'Requested space type is not available'}), 400
     if action == 'not_occupied':
        
-        # interest_rate = space_available.interest_rate / 100
-        # duration_months = space.space_duration
-        # Formula for the total amount to be repaid: A = P(1 + rt)
+        
         total_amount = space.amount 
         # Update the space status to 'occupied' and set space_available_id to None
         space.status = 'not_occupied'
@@ -766,7 +732,7 @@ def space_action(space_id):
 #fetching the spaces
 @app.route('/admin/getspaces', methods=['GET'])
 # @require_api_key
-# @admin_required  # Ensure only authenticated users can access this route
+@admin_required  # Ensure only authenticated users can access this route
 def get_space_by_status():
     if current_user.role != 'admin':
         return jsonify({'error': 'Unauthorized access'}), 403
@@ -774,7 +740,7 @@ def get_space_by_status():
         not_occupied_spaces = Space.query.filter_by(status='not_occupied').all()
         occupied_spaces = Space.query.filter_by(status='occupied_spaces').all()
         
-        spaces_data = {
+        space = {
            
             'occupied_spaces': [{
                 'id': space.id,
@@ -794,7 +760,7 @@ def get_space_by_status():
                 
             } for space in not_occupied_spaces]
         }
-        return jsonify(space_data), 200
+        return jsonify(space), 200
     except Exception as e:
         return jsonify({"message": f"Failed to fetch spaces: {str(e)}"}), 500
 # CRUD Operations for Users by admin
@@ -833,13 +799,15 @@ def manage_users():
     # Handle unsupported methods if any
     return jsonify({"message": "Method not allowed"}), 405
 # Update or Delete User
-@app.route('/admin/users/<int:user_id>', methods=['PUT', 'DELETE'])
-# @require_api_key
+
+
+@app.route('/manage_user/<int:user_id>', methods=['PUT', 'DELETE'])
 @admin_required
 def manage_user(user_id):
     user = User.query.get(user_id)
     if not user:
         return jsonify({"message": "User does not exist in the system"}), 404
+
     if request.method == 'PUT':
         # Update user details
         data = request.json
@@ -847,6 +815,9 @@ def manage_user(user_id):
         user.last_name = data.get('last_name', user.last_name)
         user.email = data.get('email', user.email)
         user.role = data.get('role', user.role)
+        user.space_name = data.get('space_name', user.space_name)
+        user.amount = data.get('amount', user.amount)
+        user.date_paid = data.get('date_paid', user.date_paid)
         # Optionally update password if provided
         password = data.get('password')
         if password:
@@ -858,13 +829,17 @@ def manage_user(user_id):
             user.verification = bool(verification_status)
         db.session.commit()
         return jsonify({"message": "User updated successfully"})
+
     elif request.method == 'DELETE':
         # Delete user
         db.session.delete(user)
         db.session.commit()
         return jsonify({"message": "User deleted successfully"})
+
     # Handle unsupported methods if any
     return jsonify({"message": "Method not allowed"}), 405
+
+# CRUD Operations for Users by admin
 #DASHBOARD ROUTE
 @app.route('/user/dashboard', methods=['GET'])
 # @require_api_key
@@ -913,7 +888,7 @@ def dashboard():
     return jsonify({
         "user_details": user_details,
         "profile_image_url": details,
-        "user_spaces": spaces_info,
+        # "user_spaces": spaces_info,
         "available_spaces": spaces
     })
 @app.route('/admin/dashboard', methods=['GET'])
