@@ -27,6 +27,16 @@ from flask_cors import CORS
 
 CORS(app)  # You can customize CORS here if needed
 
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
+app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), 'uploads')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db.init_app(app)
+migrate = Migrate(app, db)
+app.config['SECRET_KEY'] = secrets.token_hex(16)
+
+
 users = {
     "admin_user": {"role": "admin"},
     "regular_user": {"role": "user"}
@@ -64,7 +74,7 @@ serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
 # # Ensure the upload folder exists
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 mail = Mail(app)
-db.init_app(app)
+# db.init_app(app)
 login_manager = LoginManager(app)
 app.config.from_object('config')  #  space configuration from config.py
 # Initialize Flask-Session
@@ -401,7 +411,7 @@ def logout():
 @login_required
 def request_spaces():
     """
-    Endpoint for users to request a new loan.,
+    Endpoint for users to request a new space.,
     """
     try:
         data = request.get_json()

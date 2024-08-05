@@ -1,0 +1,7 @@
+Hello,
+
+Please verify your email address by clicking on the link below:
+
+{{ url_for('routes.verify_email', token=token, _external=True) }}
+
+Thank you!

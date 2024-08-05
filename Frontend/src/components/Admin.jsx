@@ -13,10 +13,11 @@ const Admin = () => {
 
     const fetchSpaces = async () => {
         try {
-            const response = await axios.get(' http://127.0.0.1:5000');
+            const response = await axios.get('http://127.0.0.1:8080/spaces'); // Correct the URL if needed
             setSpaces(response.data);
         } catch (error) {
             console.error('Error fetching spaces:', error);
+            setSpaces([]); // Ensure spaces is always an array
         }
     };
 
@@ -29,9 +30,9 @@ const Admin = () => {
         e.preventDefault();
         try {
             if (selectedSpace) {
-                await axios.put(` http://127.0.0.1:5000/spaces/${selectedSpace.id}`, form);
+                await axios.put(`http://127.0.0.1:8080/spaces/${selectedSpace.id}`, form);
             } else {
-                await axios.post(' http://127.0.0.1:5000/spaces', form);
+                await axios.post('http://127.0.0.1:8080/spaces', form);
             }
             fetchSpaces();
             setForm({ name: '', description: '', price: '' });
@@ -48,7 +49,7 @@ const Admin = () => {
 
     const handleDelete = async (id) => {
         try {
-            await axios.delete(` http://127.0.0.1:5000/spaces/${id}`);
+            await axios.delete(`http://127.0.0.1:8080/spaces/${id}`);
             fetchSpaces();
         } catch (error) {
             console.error('Error deleting space:', error);
@@ -86,17 +87,21 @@ const Admin = () => {
                 <button type="submit">{selectedSpace ? 'Update' : 'Create'} Space</button>
             </form>
             <h2>Spaces List</h2>
-            <ul>
-                {spaces.map(space => (
-                    <li key={space.id}>
-                        <div>{space.name}</div>
-                        <div>{space.description}</div>
-                        <div>{space.price}</div>
-                        <button onClick={() => handleEdit(space)}>Edit</button>
-                        <button onClick={() => handleDelete(space.id)}>Delete</button>
-                    </li>
-                ))}
-            </ul>
+            {spaces.length > 0 ? (
+                <ul>
+                    {spaces.map(space => (
+                        <li key={space.id}>
+                            <div>{space.name}</div>
+                            <div>{space.description}</div>
+                            <div>{space.price}</div>
+                            <button onClick={() => handleEdit(space)}>Edit</button>
+                            <button onClick={() => handleDelete(space.id)}>Delete</button>
+                        </li>
+                    ))}
+                </ul>
+            ) : (
+                <p>No spaces available</p>
+            )}
         </div>
     );
 };

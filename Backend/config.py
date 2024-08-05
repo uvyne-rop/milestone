@@ -13,6 +13,12 @@ load_dotenv()
 
 app = Flask(__name__)
 # Configure the app with variables from the .env file
+class Config:
+    SECRET_KEY = os.getenv('SECRET_KEY')
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///app.db'  # Example URI for SQLite
+    SQLALCHEMY_TRACK_MODIFICATIONS = False  # Optional, but recommended to disable
+    # Other configuration variables
+
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI')
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False

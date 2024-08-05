@@ -14,7 +14,7 @@ app = Flask(__name__)
 app = Flask(__name__)
 app.config.from_object('config')
 
-db.init_app(app)
+db.init_app()
 CORS(app)  # You can customize CORS here if needed
 
 app.config.from_object('config')
