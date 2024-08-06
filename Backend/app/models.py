@@ -14,13 +14,9 @@ class User(db.Model, UserMixin):
         last_name (str): The last name of the user.
         email (str): The email address of the user.
         verification (bool): Indicates if the user's email address has been verified.
-        reset_token (str): Token used for resetting the user's password.
-        reset_token_expiration (datetime): Expiration date for the reset token.
-        role (str): The role of the user, either 'regular' or 'admin'.
+        role (str): The role of the user, either 'client' or 'admin'.
         password (str): The hashed password of the user.
-        space_details(SpaceDetails): details for the spaces
-        personal_details (PersonalDetails): One-to-one relationship with personal details.
-        spaces (List[Spaces]): One-to-many relationship with spaces taken by the user.
+        spaces (List[Space]): One-to-many relationship with spaces taken by the user.
     Methods:
         get_id(): Returns the string representation of the user's ID for Flask-Login.
     """
@@ -28,21 +24,35 @@ class User(db.Model, UserMixin):
     first_name = db.Column(db.String(50), nullable=False)
     last_name = db.Column(db.String(50), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    verification = db.Column(db.Boolean, default=False)
-    reset_token = db.Column(db.String(120))
-    reset_token_expiration = db.Column(db.DateTime)
-    role = db.Column(db.String(20), default='regular')  # 'regular' or 'admin'
+    verified = db.Column(db.Boolean, default=False)
+    role = db.Column(db.String(20), default='client')  # 'client' or 'admin'
     password = db.Column(db.String(255), nullable=False)
-    personal_details = db.relationship('PersonalDetails', backref='user', uselist=False, foreign_keys='PersonalDetails.user_id')
-    
-    spaces = db.relationship('Space', backref='user', lazy=True, foreign_keys='Space.user_id')
 
-    
+    # One-to-many relationship with spaces and payments
+    spaces = db.relationship('Space', backref='user', lazy=True)
+    payments = db.relationship('Payment', backref='user', lazy=True)
+    reviews = db.relationship('Review', backref='user', lazy=True)
 
     def get_id(self):
         return str(self.id)  # Convert user ID to string for Flask-Login
 
+# ManageUser Model
 class ManageUser(db.Model):
+    """
+    Represents an administrative user responsible for managing spaces.
+    Attributes:
+        id (int): The unique identifier for the manager.
+        first_name (str): The first name of the manager.
+        last_name (str): The last name of the manager.
+        email (str): The email address of the manager.
+        verified (bool): Indicates if the manager's email address has been verified.
+        role (str): The role of the manager, typically 'admin'.
+        password (str): The hashed password of the manager.
+        space_name (str): The name of the space managed by the user.
+        location (str): The location of the space managed by the user.
+        amount (float): The amount associated with the space.
+        date_paid (datetime): The date the last payment was made.
+    """
     id = db.Column(db.Integer, primary_key=True)
     first_name = db.Column(db.String(50), nullable=False)
     last_name = db.Column(db.String(50), nullable=False)
@@ -51,106 +61,45 @@ class ManageUser(db.Model):
     role = db.Column(db.String(20), default='admin')
     password = db.Column(db.String(255), nullable=False)
     space_name = db.Column(db.String(255))
+    location = db.Column(db.String(255))
     amount = db.Column(db.Float)
     date_paid = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
         return (f"ManageUser(id={self.id}, first_name='{self.first_name}', last_name='{self.last_name}', "
                 f"email='{self.email}', verified={self.verified}, role='{self.role}', "
-                f"space_name='{self.space_name}', amount={self.amount}, date_paid={self.date_paid})")
+                f"space_name='{self.space_name}', location='{self.location}', amount={self.amount}, date_paid={self.date_paid})")
 
-# PersonalDetails Model
-class PersonalDetails(db.Model):
-    """
-    Represents personal details associated with a user.
-    Attributes:
-        id (int): The unique identifier for the personal details.
-        first_name(str): the first name of the user
-        last_name(str): the last name of the user
-        contacts(float): contacts of the user
-        gender(str):  gender of the user
-        image_url (str): URL to the user's profile image.
-       
-        national_id (str): The national identification number of the user.
-        user_id (int): The ID of the associated user.
-    Relationships:
-        user (User): The user associated with these personal details.
-    """
-    id = db.Column(db.Integer, primary_key=True)
-    image_url = db.Column(db.String(255))
-    first_name = db.Column(db.String(255))
-    last_name = db.Column(db.String(255))
-    contacts = db.Column(db.Integer, nullable=False)
-    gender = db.Column(db.String(255))
-
-    resident_type = db.Column(db.String(20))  # 'foreign' or 'Kenyan'
-    
-    national_id = db.Column(db.String(20))
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    space_id = db.Column(db.Integer, db.ForeignKey('space.id'), nullable=False)
-
+# Space Model
 class Space(db.Model):
     """
-    Represents a space taken by a user.
-    
+    Represents a space available for rent.
     Attributes:
         id (int): The unique identifier for the space.
         name (str): The name of the space.
-        image_url (str): The URL of the image representing the space.
         location (str): The location where the space is found.
-        date_taken (datetime): The date and time when the space was taken.
         description (str): A detailed description of the space.
         rating (float): The rating of the space.
-        amount (float): The amount associated with the space.
-        space_id (str): The identifier for the space (could be a code or unique string).
         status (str): The status of the space, can be 'Booked' or 'Free'.
+        imageUrl (str): The URL of the image associated with the space.
+        user_id (int): The ID of the user who took the space.
     """
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), nullable=False)
-    image_url = db.Column(db.String(255), nullable=True)
     location = db.Column(db.String(255), nullable=False)
-    date_taken = db.Column(db.DateTime, default=datetime.utcnow)
     description = db.Column(db.Text, nullable=True)
     rating = db.Column(db.Float, nullable=True)
-    amount = db.Column(db.Float, nullable=False)
-    space_id = db.Column(db.String(50), unique=True, nullable=True)
     status = db.Column(db.String(20), default='Free')  # 'Booked' or 'Free'
-    
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    space_available_id = db.Column(db.Integer, db.ForeignKey('spaces_available.id'), nullable=True)
-    
-    space_available = db.relationship('SpaceAvailable', backref=db.backref('spaces', lazy=True))
-    
-    def __repr__(self):
-        return (f"Space(id={self.id}, name={self.name}, location={self.location}, amount={self.amount}, "
-                f"date_taken={self.date_taken}, description={self.description}, "
-                f"rating={self.rating}, status='{self.status}', space_id={self.space_id})")
+    imageUrl = db.Column(db.String(255), nullable=True)  # New attribute for image URL
+    role = db.Column(db.String(20), default='admin')
 
-# SpaceAvailable Model
-class SpaceAvailable(db.Model):
-    """
-    Represents a type of place available for users to request.
-    Attributes:
-        id (int): The unique identifier for the available space type.
-        name (str): The name of the space type.
-        space_type (str): The type/category/location of the space.
-        amount (float): The maximum amount that can be requested for this space type.
-        interest_rate (float): The interest rate for this space type.
-        duration_months (int): The maximum duration in months for this space.
-    """
-    __tablename__ = 'spaces_available'
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    name = db.Column(db.String(100), nullable=False)
-    space_type = db.Column(db.String(100), nullable=False)
-    location = db.Column(db.String(100), nullable=False)
-    amount = db.Column(db.Float, nullable=False)
-   
-    duration_months = db.Column(db.Integer, nullable=False)
-    
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+
     def __repr__(self):
-        return (f"SpaceAvailable(id={self.id}, name='{self.name}', space_type='{self.space_type}', space_location='{self.location}', "
-                f"amount={self.amount}, "
-                f"duration_months={self.duration_months})")
+        return (f"Space(id={self.id}, name='{self.name}', location='{self.location}', "
+                f"description='{self.description}', rating={self.rating}, status='{self.status}', "
+                f"imageUrl='{self.imageUrl}')")
+
 
 # Payment Model
 class Payment(db.Model):
@@ -158,15 +107,93 @@ class Payment(db.Model):
     Represents a payment for the space.
     Attributes:
         id (int): The unique identifier for the payment.
-        amount_to_paid (float): The amount paid in this repayment.
-        last_payment_date (datetime): The date of the last payment made.
-        status (str): The status of the repayment, either 'full' or 'partial'.
+        user_id (int): The ID of the user who made the payment.
+        amount (float): The amount paid.
+        date_paid (datetime): The date the payment was made.
         space_id (int): The ID of the space associated with this payment.
-    Relationships:
-        space (Space): The space associated with this repayment.
+        first_name (str): The first name of the user who made the payment.
+        last_name (str): The last name of the user who made the payment.
+        contacts (str): The contact details of the user who made the payment.
+        payment_mode (str): The mode of payment used.
+        message (str): Additional message or note related to the payment.
     """
     id = db.Column(db.Integer, primary_key=True)
-    amount_to_paid = db.Column(db.Float)
-    last_payment_date = db.Column(db.DateTime)
-    status = db.Column(db.String(20))
+    name = db.Column(db.String(100), nullable=False)
+    location = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    price = db.Column(db.Float, nullable=False)  # Price in KSH
+    rating = db.Column(db.Float, nullable=True)
+    status = db.Column(db.String(10), nullable=False)
+    image_url = db.Column(db.String(200), nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    # bookings = db.relationship('BookedSpace', backref='space', lazy=True)
+    # reviews = db.relationship('Review', backref='space', lazy=True)
+
+    def __repr__(self):
+        return (f"Payment(id={self.id}, user_id={self.user_id}, amount={self.amount}, date_paid={self.date_paid}, "
+                f"space_id={self.space_id}, first_name='{self.first_name}', last_name='{self.last_name}', "
+                f"contacts='{self.contacts}', payment_mode='{self.payment_mode}', message='{self.message}')")
+
+# Review Model
+class Review(db.Model):
+    """
+    Represents a review for a space.
+    Attributes:
+        id (int): The unique identifier for the review.
+        user_id (int): The ID of the user who wrote the review.
+        space_id (int): The ID of the space being reviewed.
+        review_message (str): The content of the review message.
+        rating (int): The rating given by the user in stars.
+        user_first_name (str): The first name of the user who wrote the review.
+        user_last_name (str): The last name of the user who wrote the review.
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     space_id = db.Column(db.Integer, db.ForeignKey('space.id'), nullable=False)
+    review_message = db.Column(db.Text, nullable=False)
+    rating = db.Column(db.Integer, nullable=False)  # Rating in stars
+    user_first_name = db.Column(db.String(50), nullable=False)
+    user_last_name = db.Column(db.String(50), nullable=False)
+
+    def __repr__(self):
+        return (f"Review(id={self.id}, user_id={self.user_id}, space_id={self.space_id}, "
+                f"review_message='{self.review_message}', rating={self.rating}, "
+                f"user_first_name='{self.user_first_name}', user_last_name='{self.user_last_name}')")
+
+# BookedSpace Model
+class BookedSpace(db.Model):
+    """
+    Represents a booked space by a user.
+    Attributes:
+        id (int): The unique identifier for the booked space.
+        user_id (int): The ID of the user who booked the space.
+        space_id (int): The ID of the space that has been booked.
+        user_first_name (str): The first name of the user who booked the space.
+        user_last_name (str): The last name of the user who booked the space.
+        email (str): The email address of the user who booked the space.
+        contact (str): The contact details of the user.
+        space_name (str): The name of the space booked.
+        location (str): The location of the space.
+        image_url (str): The URL of the image representing the space.
+        status (str): The booking status of the space, either 'Booked' or 'Free'.
+        paid (bool): Indicates whether the payment has been made.
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    space_id = db.Column(db.Integer, db.ForeignKey('space.id'), nullable=False)
+    user_first_name = db.Column(db.String(50), nullable=False)
+    user_last_name = db.Column(db.String(50), nullable=False)
+    email = db.Column(db.String(120), nullable=False)
+    contact = db.Column(db.String(100), nullable=False)
+    space_name = db.Column(db.String(255), nullable=False)
+    location = db.Column(db.String(255), nullable=False)
+    image_url = db.Column(db.String(255), nullable=True)
+    status = db.Column(db.String(20), nullable=False)  # 'Booked' or 'Free'
+    paid = db.Column(db.Boolean, default=False)  # Indicates payment status
+
+    def __repr__(self):
+        return (f"BookedSpace(id={self.id}, user_id={self.user_id}, space_id={self.space_id}, "
+                f"user_first_name='{self.user_first_name}', user_last_name='{self.user_last_name}', "
+                f"email='{self.email}', contact='{self.contact}', space_name='{self.space_name}', "
+                f"location='{self.location}', image_url='{self.image_url}', status='{self.status}', "
+                f"paid={self.paid})")
